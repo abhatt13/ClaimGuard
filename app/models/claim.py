@@ -80,11 +80,11 @@ class Claim(Base, UUIDMixin, TimestampMixin, SoftDeleteMixin, AuditMixin):
         index=True
     )
 
-    # Relationships
+    # Relationships (claimant is optional for historical data)
     claimant_id = Column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
-        nullable=False,
+        nullable=True,
         index=True
     )
 
@@ -185,7 +185,7 @@ class Claim(Base, UUIDMixin, TimestampMixin, SoftDeleteMixin, AuditMixin):
     closed_at = Column(DateTime, nullable=True)
 
     # Additional metadata
-    metadata = Column(
+    claim_metadata = Column(
         JSON,
         nullable=True,
         comment="Additional flexible data storage"
