@@ -1,0 +1,174 @@
+# ClaimGuard .gitignore
+
+# Environment variables (NEVER commit secrets!)
+.env
+.env.local
+.env.*.local
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+*.ipynb
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+coverage.xml
+*.cover
+
+# Databases (Local data - too large for git)
+*.db
+*.sqlite
+*.sqlite3
+data/raw/**
+data/processed/**
+data/policies/**
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/policies/.gitkeep
+
+# Docker volumes
+docker-compose.override.yml
+postgres_data/
+redis_data/
+neo4j_data/
+qdrant_data/
+minio_data/
+
+# ML Models (Large files)
+app/ml/models/*.pkl
+app/ml/models/*.h5
+app/ml/models/*.pt
+app/ml/models/*.pth
+app/ml/models/*.joblib
+!app/ml/models/.gitkeep
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Alembic
+alembic/versions/*.pyc
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# OS files
+Thumbs.db
+.DS_Store
+*.DS_Store
+
+# API Keys and secrets
+*secret*
+*key*
+credentials.json
+service-account*.json
+
+# Large datasets (download separately)
+*.csv
+*.parquet
+*.feather
+!data/sample*.csv  # Allow small sample files
+
+# Image datasets (too large)
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.tiff
+!docs/images/*.png  # Allow documentation images
+!app/ui/assets/*.png  # Allow UI assets
+
+# Video files
+*.mp4
+*.avi
+*.mov
+*.mkv
+
+# Compressed files (large datasets)
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+
+# Cache
+.cache/
+*.cache
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Terraform (if used for deployment)
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+
+# Node modules (if any frontend added later)
+node_modules/
+
+# Documentation builds
+docs/_build/
+site/
+
+# Gradio temp files
+gradio_cached_examples/
+flagged/
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Keep empty directories
+!.gitkeep
