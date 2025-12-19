@@ -16,10 +16,13 @@ from app.core.config import settings
 from app.core.database import Base
 
 # Import all models to ensure they're registered with Base
-# These imports will be added as we create the models
-# from app.models.user import User, Role
-# from app.models.claim import Claim
-# from app.models.policy import Policy
+from app.models.user import User, Role
+from app.models.claim import Claim
+from app.models.policy import Policy
+from app.models.damage_assessment import DamageAssessment
+from app.models.fraud_score import FraudScore
+from app.models.settlement import Settlement
+from app.models.workflow_state import WorkflowState
 
 # Alembic Config object
 config = context.config
