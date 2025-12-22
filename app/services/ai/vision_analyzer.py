@@ -13,6 +13,7 @@ from openai import OpenAI
 from PIL import Image
 
 from app.core.config import settings
+from app.services.ai.repair_rag_service import repair_rag_service
 
 
 class VisionAnalyzer:
@@ -91,6 +92,31 @@ class VisionAnalyzer:
             # Parse response
             analysis_text = response.choices[0].message.content
             analysis = self._parse_analysis_response(analysis_text)
+
+            # Augment with RAG if damage types detected
+            if analysis.get('success') and analysis.get('damage_types'):
+                rag_augmentation = repair_rag_service.augment_damage_assessment(
+                    detected_damages=analysis['damage_types'],
+                    severity=analysis.get('severity', '').lower().replace('_', ' '),
+                    additional_context=claim_context
+                )
+
+                # Override cost estimates with RAG data (more accurate)
+                if rag_augmentation['cost_estimate']['confidence'] == 'high':
+                    analysis['cost_estimate'] = {
+                        'min': rag_augmentation['cost_estimate']['min'],
+                        'max': rag_augmentation['cost_estimate']['max']
+                    }
+                    analysis['cost_estimate_source'] = 'RAG (Historical Data)'
+                else:
+                    analysis['cost_estimate_source'] = 'AI Estimate'
+
+                # Add RAG context
+                analysis['rag_context'] = {
+                    'repair_timeline': rag_augmentation['repair_timeline'],
+                    'recommendations': rag_augmentation['recommendations'],
+                    'similar_scenarios': rag_augmentation['repair_context'].get('similar_scenarios', [])[:2]
+                }
 
             # Add metadata
             analysis['model'] = self.model

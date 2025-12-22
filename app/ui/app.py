@@ -135,55 +135,205 @@ def get_claim_details(claim_number):
     return details
 
 
-def analyze_damage_image(image):
+def analyze_damage_yolo_subprocess(image_path):
+    """Run YOLO inference via subprocess in clean venv"""
+    import subprocess
+    import json
+    import tempfile
+
+    venv_python = Path("/Users/aakashbhatt/ClaimGuard/venv_yolo/bin/python")
+
+    if not venv_python.exists():
+        return {
+            "success": False,
+            "error": "YOLO environment not set up. Run: bash scripts/setup_yolo_venv.sh"
+        }
+
+    # Create temp script for inference
+    script_content = f"""
+import sys
+from pathlib import Path
+sys.path.insert(0, '/Users/aakashbhatt/ClaimGuard')
+
+from ultralytics import YOLO
+import json
+
+model = YOLO('/Users/aakashbhatt/ClaimGuard/app/ml/models/yolo_damage/damage_detector_v1/weights/best.pt')
+results = model('{image_path}')
+
+detections = []
+for result in results:
+    for box in result.boxes:
+        detections.append({{
+            "class_name": result.names[int(box.cls[0])],
+            "confidence": float(box.conf[0]),
+            "bbox": box.xyxy[0].tolist()
+        }})
+
+print(json.dumps({{"detections": detections}}))
+"""
+
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+        f.write(script_content)
+        temp_script = f.name
+
+    try:
+        result = subprocess.run(
+            [str(venv_python), temp_script],
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+
+        Path(temp_script).unlink()
+
+        if result.returncode == 0:
+            data = json.loads(result.stdout.strip().split('\n')[-1])
+            return {"success": True, "detections": data['detections']}
+        else:
+            return {"success": False, "error": result.stderr}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+def analyze_damage_image(image, model_choice="OpenAI Vision"):
     """Analyze uploaded damage image"""
 
     if image is None:
         return "Please upload an image to analyze"
 
     try:
-        analyzer = get_vision_analyzer()
+        if model_choice == "Custom YOLO":
+            # Save image to temp file for YOLO
+            from PIL import Image
+            import tempfile
 
-        # Convert gradio image to bytes
-        from PIL import Image
-        import io
+            if isinstance(image, str):
+                image_path = image
+            else:
+                # Save numpy array to temp file
+                pil_image = Image.fromarray(image)
+                with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as f:
+                    pil_image.save(f, format='JPEG')
+                    image_path = f.name
 
-        if isinstance(image, str):
-            # File path
-            result = analyzer.analyze_damage(image)
-        else:
-            # numpy array from gradio
-            pil_image = Image.fromarray(image)
-            img_byte_arr = io.BytesIO()
-            pil_image.save(img_byte_arr, format='JPEG')
-            img_bytes = img_byte_arr.getvalue()
+            # Run YOLO inference
+            result = analyze_damage_yolo_subprocess(image_path)
 
-            result = analyzer.analyze_damage(img_bytes)
+            if not isinstance(image, str):
+                Path(image_path).unlink()
 
-        if result.get('success'):
-            output = f"""
-            ### ✅ Damage Assessment Complete
+            if result.get('success'):
+                detections = result['detections']
 
-            **Damage Types:** {', '.join(result.get('damage_types', []))}
+                if detections:
+                    damage_types = list(set(d['class_name'] for d in detections))
+                    avg_conf = sum(d['confidence'] for d in detections) / len(detections)
 
-            **Severity:** {result.get('severity')}
+                    # Estimate severity and cost
+                    if len(detections) >= 3:
+                        severity = "Major"
+                        cost_min, cost_max = 8000, 20000
+                    elif len(detections) >= 2:
+                        severity = "Moderate"
+                        cost_min, cost_max = 2000, 8000
+                    else:
+                        severity = "Minor"
+                        cost_min, cost_max = 500, 2000
 
-            **Severity Score:** {result.get('severity_score')}/100
+                    output = f"""
+### ✅ Damage Assessment Complete (Custom YOLO)
 
-            **Affected Areas:** {', '.join(result.get('affected_areas', []))}
+**Damage Types:** {', '.join(damage_types)}
 
-            **Estimated Cost:** ${result.get('cost_estimate', {}).get('min', 0):,.2f} - ${result.get('cost_estimate', {}).get('max', 0):,.2f}
+**Detections:** {len(detections)} damage area(s) found
 
-            **Notes:** {result.get('notes', 'N/A')}
+**Average Confidence:** {avg_conf:.1%}
 
-            ---
-            *Model: {result.get('model')}*
+**Severity:** {severity}
 
-            *Tokens Used: {result.get('usage', {}).get('total_tokens', 0)}*
-            """
-            return output
-        else:
-            return f"❌ Analysis failed: {result.get('error')}"
+**Estimated Cost:** ${cost_min:,.0f} - ${cost_max:,.0f}
+
+#### Detected Damages:
+"""
+                    for i, det in enumerate(detections, 1):
+                        output += f"\n{i}. **{det['class_name']}** - Confidence: {det['confidence']:.1%}"
+
+                    output += "\n\n---\n*Model: Custom YOLOv8 Nano (6 damage classes)*\n*Cost: $0 (Free local inference)*"
+                    return output
+                else:
+                    return """
+### ℹ️ No Damage Detected
+
+The custom YOLO model did not detect any damage in this image.
+
+Possible reasons:
+- No visible damage present
+- Damage type not in training data (6 classes)
+- Confidence threshold not met
+
+---
+*Model: Custom YOLOv8 Nano*
+"""
+            else:
+                return f"""
+### ❌ YOLO Analysis Failed
+
+{result.get('error', 'Unknown error')}
+
+**Troubleshooting:**
+1. Run: `bash scripts/setup_yolo_venv.sh`
+2. Or use OpenAI Vision instead
+
+---
+*Falling back to OpenAI Vision is recommended*
+"""
+
+        else:  # OpenAI Vision
+            analyzer = get_vision_analyzer()
+
+            # Convert gradio image to bytes
+            from PIL import Image
+            import io
+
+            if isinstance(image, str):
+                # File path
+                result = analyzer.analyze_damage(image)
+            else:
+                # numpy array from gradio
+                pil_image = Image.fromarray(image)
+                img_byte_arr = io.BytesIO()
+                pil_image.save(img_byte_arr, format='JPEG')
+                img_bytes = img_byte_arr.getvalue()
+
+                result = analyzer.analyze_damage(img_bytes)
+
+            if result.get('success'):
+                output = f"""
+### ✅ Damage Assessment Complete (OpenAI Vision)
+
+**Damage Types:** {', '.join(result.get('damage_types', []))}
+
+**Severity:** {result.get('severity')}
+
+**Severity Score:** {result.get('severity_score')}/100
+
+**Affected Areas:** {', '.join(result.get('affected_areas', []))}
+
+**Estimated Cost:** ${result.get('cost_estimate', {}).get('min', 0):,.2f} - ${result.get('cost_estimate', {}).get('max', 0):,.2f}
+
+**Notes:** {result.get('notes', 'N/A')}
+
+---
+*Model: {result.get('model')}*
+
+*Tokens Used: {result.get('usage', {}).get('total_tokens', 0)}*
+
+*Cost: ~$0.0006*
+"""
+                return output
+            else:
+                return f"❌ Analysis failed: {result.get('error')}"
 
     except Exception as e:
         return f"❌ Error: {str(e)}"
@@ -241,6 +391,13 @@ with gr.Blocks(title="ClaimGuard - AI Insurance Claims Processing", theme=gr.the
 
         with gr.Row():
             with gr.Column():
+                model_selector = gr.Radio(
+                    choices=["OpenAI Vision", "Custom YOLO"],
+                    value="Custom YOLO",
+                    label="Select AI Model",
+                    info="Choose between OpenAI Vision API or Custom YOLO model"
+                )
+
                 damage_image = gr.Image(
                     label="Upload Damage Photo",
                     type="numpy"
@@ -253,14 +410,24 @@ with gr.Blocks(title="ClaimGuard - AI Insurance Claims Processing", theme=gr.the
 
         analyze_btn.click(
             analyze_damage_image,
-            inputs=damage_image,
+            inputs=[damage_image, model_selector],
             outputs=damage_results
         )
 
         gr.Markdown("""
-        **Note:** This uses OpenAI Vision API (gpt-4o-mini)
+        ### Model Comparison
 
-        **Cost:** ~$0.0006 per image
+        **Custom YOLO** (Recommended):
+        - ✅ FREE (local inference)
+        - ✅ Fast (~50ms per image)
+        - ✅ Trained on 6 damage types
+        - ✅ No API costs
+
+        **OpenAI Vision**:
+        - 💰 $0.0006 per image
+        - 🔍 Detailed analysis
+        - 🌍 General purpose
+        - ⏱️ ~2-3 seconds per image
         """)
 
     with gr.Tab("📈 Analytics"):
@@ -294,7 +461,7 @@ with gr.Blocks(title="ClaimGuard - AI Insurance Claims Processing", theme=gr.the
 
     gr.Markdown("""
     ---
-    **ClaimGuard v1.0** | Powered by OpenAI Vision & XGBoost
+    **ClaimGuard v1.0** | Powered by Custom YOLO, OpenAI Vision & XGBoost
     """)
 
 

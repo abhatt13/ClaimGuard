@@ -1,417 +1,266 @@
-# 🛡️ ClaimGuard
+# ClaimGuard
 
 **AI-Powered Insurance Claims Processing & Fraud Detection System**
 
-*Student Budget Edition - Built to run on <$50/month*
-
-[![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.109-009688.svg)](https://fastapi.tiangolo.com/)
-[![Gradio](https://img.shields.io/badge/Gradio-4.16-orange.svg)](https://gradio.app/)
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg)](https://www.docker.com/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+I built ClaimGuard as a comprehensive solution for automating insurance claim reviews using artificial intelligence. This system combines computer vision, machine learning, and intelligent workflow automation to streamline the entire claims process from submission to approval or denial.
 
 ---
 
-## 📋 Table of Contents
+## What This System Does
 
-- [Overview](#overview)
-- [Features](#features)
-- [Budget Breakdown](#budget-breakdown)
-- [Tech Stack](#tech-stack)
-- [Quick Start](#quick-start)
-- [Project Structure](#project-structure)
-- [Configuration](#configuration)
-- [Development](#development)
-- [Datasets](#datasets)
-- [Deployment](#deployment)
-- [Cost Optimization](#cost-optimization)
+ClaimGuard helps insurance claim adjusters review and process claims efficiently by:
+
+- **Analyzing damage photos** using AI vision to estimate repair costs
+- **Detecting potential fraud** through multi-model analysis and pattern matching
+- **Automating document generation** for approvals and denials
+- **Providing intelligent recommendations** based on real-time data analysis
+
+The system handles the complete workflow: from selecting a claim to review, analyzing damage evidence, calculating fraud risk, and generating professional approval letters or denial emails.
 
 ---
 
-## 🎯 Overview
+## Key Features
 
-ClaimGuard is a production-grade insurance claims processing system powered by AI, designed specifically for **students** and **budget-conscious developers**. It demonstrates enterprise-level architecture while keeping costs under **$30/month**.
+### Intelligent Damage Assessment
+I integrated both OpenAI's Vision API and a custom YOLOv8 model to analyze vehicle damage photos. The system:
+- Identifies specific damaged parts (bumper, hood, doors, etc.)
+- Estimates repair costs per component
+- Provides detailed breakdowns of parts, labor, and materials
+- Uses historical repair data (RAG) for accurate cost estimation
 
-### Key Capabilities
+### Real-Time Fraud Detection
+The fraud detection engine performs multi-layered analysis:
+- Compares claimed amounts against actual damage estimates
+- Checks for suspicious patterns (over-claiming, under-claiming, missing evidence)
+- Validates policy coverage ratios
+- Analyzes historical claim patterns using XGBoost ML models
+- Auto-generates detailed denial reasons when fraud is detected
 
-1. **Multi-Modal Damage Assessment** - Analyze photos, videos, and repair estimates using AI vision
-2. **Policy Coverage Analyzer** - RAG system with semantic search through policy documents
-3. **LangGraph Workflow** - Automated claim routing (instant approval → detailed review → fraud investigation)
-4. **Fraud Detection Engine** - ML + Neo4j graph analysis to identify suspicious patterns
-5. **Automated Settlement** - Generate settlement offers and explanation letters
+### Streamlined Workflow
+I designed a step-by-step interface that mirrors how adjusters actually work:
+1. **Select Claim** - Click any claim from the queue to auto-load details
+2. **Analyze Damage** - Process photos to get detailed cost breakdowns
+3. **Calculate Fraud Risk** - Real-time assessment with clear recommendations
+4. **Make Decision** - Generate approval letters or rejection emails
 
----
-
-## ✨ Features
-
-### 🔍 Intelligent Claim Processing
-- **Automated damage assessment** using OpenAI Vision (gpt-4o-mini)
-- **Policy coverage analysis** with RAG (Retrieval-Augmented Generation)
-- **Smart routing** based on claim amount, fraud score, and coverage
-
-### 🚨 Fraud Detection
-- **ML-based detection** using XGBoost on historical claims data
-- **Graph network analysis** using Neo4j to identify fraud rings
-- **Composite scoring** combining multiple detection methods
-- **Real-time pattern matching** across claimant history
-
-### ⚡ Workflow Automation
-- **LangGraph orchestration** for complex decision trees
-- **Instant approval** for low-risk claims (<$5,000)
-- **Escalation logic** for high-risk or complex cases
-- **Human-in-the-loop** for edge cases
-
-### 📊 Analytics & Visualization
-- **Interactive dashboards** built with Gradio
-- **Fraud network graphs** visualized with Pyvis
-- **Real-time metrics** and performance tracking
+### Professional Document Generation
+The system automatically creates:
+- **Approval Letters** with settlement breakdowns and payment timelines
+- **Rejection Emails** with specific fraud indicators and appeal information
 
 ---
 
-## 💰 Budget Breakdown
+## Technology Stack
 
-### Monthly Costs (~$20-30)
+**Frontend:**
+- Gradio for the interactive web interface
+- Real-time image gallery and data visualization
 
-| Service | Cost | Notes |
-|---------|------|-------|
-| **Local PostgreSQL** | **FREE** | Docker container |
-| **Local Redis** | **FREE** | Docker container |
-| **Neo4j Community** | **FREE** | Docker container |
-| **Qdrant Local** | **FREE** | Docker container |
-| **MinIO Storage** | **FREE** | Local S3-compatible |
-| **OpenAI API** | **$20-30** | GPT-3.5-turbo + gpt-4o-mini |
-| **Hosting (Optional)** | **FREE** | Railway/Render free tier |
+**Backend & AI:**
+- FastAPI for API services
+- OpenAI Vision API (gpt-4o-mini) for damage analysis
+- Custom YOLOv8 Nano model for fast, local damage detection
+- XGBoost for fraud classification
+- RAG system with historical repair cost database
 
-### Cost Optimization Strategies
-
-✅ **Use GPT-3.5-turbo** instead of GPT-4 (30x cheaper!)
-✅ **Aggressive caching** (90% cache hit rate = 90% cost reduction)
-✅ **Local models** (Ollama) for non-critical tasks
-✅ **Batch processing** to reduce API calls
-✅ **Sample datasets** instead of full datasets
-
-**Total: ~$25/month** 🎉 (Well under your $50 budget!)
+**Data Storage:**
+- PostgreSQL for claims, policies, and fraud scores (15,420 records)
+- File system for damage evidence images (20,551 images from Roboflow dataset)
 
 ---
 
-## 🛠️ Tech Stack
-
-### Backend
-- **FastAPI** - Async API framework
-- **LangChain & LangGraph** - Workflow orchestration
-- **SQLAlchemy** - ORM for PostgreSQL
-- **Redis** - Caching & session management
-
-### AI/ML
-- **OpenAI** - GPT-3.5-turbo, gpt-4o-mini, embeddings
-- **Scikit-learn & XGBoost** - Fraud detection models
-- **OpenCV** - Image processing
-
-### Databases
-- **PostgreSQL** - Relational data (claims, policies, users)
-- **Neo4j** - Graph database for fraud networks
-- **Qdrant** - Vector database for RAG
-- **Redis** - High-speed cache
-
-### Frontend
-- **Gradio** - Interactive ML/AI interfaces
-
-### Infrastructure
-- **Docker & Docker Compose** - Local development
-- **MinIO** - S3-compatible object storage
-
----
-
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
+- Python 3.10+
+- PostgreSQL database
+- OpenAI API key
 
-- **Python 3.11+**
-- **Docker & Docker Compose**
-- **Git**
-- **OpenAI API Key** ([Get one here](https://platform.openai.com/api-keys))
-
-### 1. Clone the Repository
+### Installation
 
 ```bash
-git clone https://github.com/abhatt13/ClaimGuard.git
+# Clone the repository
+git clone https://github.com/yourusername/ClaimGuard.git
 cd ClaimGuard
-```
-
-### 2. Set Up Environment
-
-```bash
-# Copy environment template
-cp .env.example .env
-
-# Edit .env and add your OpenAI API key
-nano .env  # or use your favorite editor
-```
-
-**Required:** Add your OpenAI API key:
-```bash
-OPENAI_API_KEY=sk-your-key-here
-```
-
-### 3. Start Docker Services
-
-```bash
-# Start all services (PostgreSQL, Redis, Neo4j, Qdrant, MinIO)
-docker-compose up -d
-
-# Check that all services are running
-docker-compose ps
-```
-
-You should see all services healthy:
-- ✅ claimguard-postgres
-- ✅ claimguard-redis
-- ✅ claimguard-neo4j
-- ✅ claimguard-qdrant
-- ✅ claimguard-minio
-
-### 4. Install Python Dependencies
-
-```bash
-# Create virtual environment
-python -m venv venv
-
-# Activate virtual environment
-source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env and add your OPENAI_API_KEY
+
+# Initialize database
+python scripts/init_db.py
+
+# Load sample data
+python scripts/ingest_kaggle_data.py
+python scripts/assign_roboflow_images.py
 ```
 
-### 5. Initialize Database
+### Running the Application
 
 ```bash
-# Run database migrations
-alembic upgrade head
+# Start the dashboard
+python app/ui/claim_review_app.py
 
-# Seed initial data (optional)
-python scripts/seed_data.py
+# Open your browser to
+http://localhost:7860
 ```
-
-### 6. Download Datasets (Sample)
-
-```bash
-# Download Kaggle fraud dataset (requires Kaggle API)
-kaggle datasets download -d arpan129/insurance-fraud-detection
-unzip insurance-fraud-detection.zip -d data/raw/kaggle_fraud/
-
-# Download sample vehicle damage images
-# (Instructions in docs/datasets.md)
-```
-
-### 7. Run the Application
-
-```bash
-# Terminal 1: Start FastAPI backend
-uvicorn app.api.main:app --reload --port 8000
-
-# Terminal 2: Start Gradio UI
-python app/ui/app.py
-```
-
-### 8. Access the Application
-
-- **API Documentation**: http://localhost:8000/docs
-- **Gradio UI**: http://localhost:7860
-- **Neo4j Browser**: http://localhost:7474 (user: neo4j, pass: claimguard123)
-- **MinIO Console**: http://localhost:9001 (user: claimguard, pass: claimguard123)
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 ClaimGuard/
 ├── app/
-│   ├── api/                    # FastAPI routes
-│   │   ├── main.py
-│   │   └── routes/
-│   │       ├── claims.py
-│   │       ├── damage.py
-│   │       ├── fraud.py
-│   │       └── workflow.py
-│   ├── core/                   # Core configuration
-│   │   ├── config.py           # Settings management
-│   │   ├── database.py         # DB connections
-│   │   └── security.py         # Auth & encryption
-│   ├── models/                 # SQLAlchemy ORM models
-│   ├── schemas/                # Pydantic schemas
-│   ├── services/               # Business logic
-│   │   ├── damage/             # Damage assessment
-│   │   ├── fraud/              # Fraud detection
-│   │   ├── policy/             # Policy RAG
-│   │   └── workflow/           # LangGraph workflows
-│   ├── ml/                     # ML models & training
-│   └── ui/                     # Gradio interface
-├── data/                       # Datasets (gitignored)
-├── scripts/                    # Utility scripts
-├── tests/                      # Test suite
-├── docker-compose.yml          # Local services
-├── requirements.txt            # Python dependencies
-└── README.md                   # This file
+│   ├── core/              # Configuration and database connections
+│   ├── models/            # SQLAlchemy database models
+│   ├── services/          # Business logic
+│   │   └── ai/           # AI services (vision, fraud, RAG)
+│   ├── ml/                # Machine learning models
+│   └── ui/                # Gradio web interface
+├── data/                  # Datasets (gitignored)
+│   └── raw/
+│       └── roboflow_damage/  # 312 vehicle damage images
+├── scripts/               # Setup and utility scripts
+├── requirements.txt       # Python dependencies
+└── README.md
 ```
 
 ---
 
-## ⚙️ Configuration
+## How It Works
 
-All configuration is managed through environment variables in `.env`:
+### 1. Damage Analysis with RAG
 
-### Required Settings
+When analyzing damage photos, I don't just rely on AI vision alone. I built a RAG (Retrieval-Augmented Generation) system that:
+- Retrieves historical repair costs from a knowledge base
+- Matches detected damage types to real repair scenarios
+- Provides accurate cost estimates based on actual data
+- Includes repair timelines and recommendations
 
-```bash
-# OpenAI API (REQUIRED)
-OPENAI_API_KEY=sk-...
+### 2. Intelligent Fraud Detection
 
-# Database (Auto-configured for Docker)
-DATABASE_URL=postgresql://claimguard_user:claimguard_pass@localhost:5432/claimguard
+The fraud detection goes beyond pre-calculated scores. I implemented real-time checks that:
+- Compare what the claimant says the damage costs versus what the AI actually finds
+- Flag suspicious patterns like claiming near maximum coverage
+- Check evidence quality (missing photos, suspicious image counts)
+- Auto-generate detailed denial reasons with specific fraud indicators
 
-# Security (Change in production!)
-JWT_SECRET_KEY=your-secret-key-here
-```
+### 3. One-Click Workflow
 
-### Optional Settings
-
-```bash
-# Use local LLM instead of OpenAI (FREE)
-OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_MODEL=llama2
-
-# Cost control
-MAX_CLAIMS_PER_DAY=1000
-RATE_LIMIT_PER_MINUTE=60
-```
-
-See `.env.example` for all available options.
+I designed the interface to be as efficient as possible:
+- Click any claim in the table to instantly load all details
+- All images display immediately in a gallery
+- Action buttons are clearly labeled with what they do
+- Results update in real-time as you progress through steps
 
 ---
 
-## 🧪 Development
+## Key Datasets
+
+**Insurance Claims Data:**
+- Source: Kaggle Insurance Fraud Detection Dataset
+- Records: 15,420 real insurance claims with fraud labels
+- Features: 33 attributes including claim amount, incident details, policy info
+
+**Vehicle Damage Images:**
+- Source: Roboflow Car Damage Dataset
+- Images: 312 annotated vehicle damage photos
+- Categories: 6 damage types (dent, scratch, broken glass, front/rear/side damage)
+- Split: Training, validation, and test sets
+
+---
+
+## Configuration
+
+Create a `.env` file in the project root:
+
+```bash
+# Required
+OPENAI_API_KEY=your-api-key-here
+DATABASE_URL=postgresql://user:password@localhost:5432/claimguard
+
+# Optional
+OPENAI_VISION_MODEL=gpt-4o-mini  # For cost optimization
+MAX_CLAIMS_PER_DAY=1000          # Rate limiting
+```
+
+---
+
+## Development
+
+I structured the code to be maintainable and extensible:
+
+- **Models** (`app/models/`) - Database schemas using SQLAlchemy
+- **Services** (`app/services/`) - Business logic separated from UI
+- **Scripts** (`scripts/`) - One-time setup and data loading utilities
 
 ### Running Tests
 
 ```bash
-# Run all tests
-pytest
-
-# Run with coverage
-pytest --cov=app --cov-report=html
-
-# Run specific test file
-pytest tests/unit/test_fraud_detector.py
+pytest tests/
 ```
 
-### Code Formatting
+### Code Style
 
 ```bash
-# Format code
 black app/
 isort app/
-
-# Lint
-flake8 app/
-mypy app/
-```
-
-### Database Migrations
-
-```bash
-# Create new migration
-alembic revision --autogenerate -m "Add new table"
-
-# Apply migrations
-alembic upgrade head
-
-# Rollback
-alembic downgrade -1
 ```
 
 ---
 
-## 📊 Datasets
+## Cost Optimization
 
-### Fraud Detection
-- **Kaggle Insurance Fraud**: 15,420 records ([Download](https://www.kaggle.com/datasets/arpan129/insurance-fraud-detection))
+I designed this to run affordably:
 
-### Vehicle Damage Images
-- **VehiDE Dataset**: 13,945 images ([Paper](https://www.tandfonline.com/doi/full/10.1080/24751839.2024.2367387))
-- **Roboflow Car Damage**: 300+ annotated images ([Download](https://universe.roboflow.com/car-damage-kadad/car-damage-images))
+- **OpenAI Vision**: ~$0.0006 per image (gpt-4o-mini)
+- **Custom YOLO**: Free local inference (~50ms per image)
+- **Caching**: All AI responses cached to avoid repeat API calls
+- **Estimated monthly cost**: $20-30 for moderate usage
 
-*Note: For budget reasons, use sample subsets during development*
-
----
-
-## 🚢 Deployment
-
-### Free Tier Options
-
-#### Option 1: Railway (Recommended)
-```bash
-# Install Railway CLI
-npm install -g @railway/cli
-
-# Login
-railway login
-
-# Deploy
-railway up
-```
-
-#### Option 2: Render
-1. Connect GitHub repo
-2. Create Web Service
-3. Set environment variables
-4. Deploy!
+To further reduce costs:
+- Use Custom YOLO instead of OpenAI Vision where possible
+- Implement aggressive caching strategies
+- Batch process claims during off-peak hours
 
 ---
 
-## 💡 Cost Optimization Tips
+## Future Improvements
 
-### 1. Maximize Cache Hits
-```python
-# All LLM responses are cached in Redis
-# Aim for 90%+ cache hit rate
-```
-
-### 2. Use Cheaper Models
-```python
-# GPT-3.5-turbo for text: $0.001/1K tokens
-# gpt-4o-mini for vision: $0.15/1M tokens
-# vs GPT-4: $0.03/1K tokens (30x more expensive!)
-```
-
-### 3. Batch Processing
-```python
-# Process multiple images in one API call
-# Use embeddings batch API
-```
-
-### 4. Local Models (FREE)
-```bash
-# Install Ollama
-curl https://ollama.ai/install.sh | sh
-
-# Run local Llama
-ollama run llama2
-
-# Update .env
-OLLAMA_BASE_URL=http://localhost:11434
-```
+Areas I'm planning to enhance:
+- Real-time video damage analysis
+- Integration with Neo4j for fraud network detection
+- Mobile app for field adjusters
+- Multi-language support for global deployment
+- Advanced analytics dashboard with fraud trend visualization
 
 ---
 
-## 👨‍💻 Author
+## About Me
 
-**Aakash Bhatt** ([@abhatt13](https://github.com/abhatt13))
+I'm Aakash Bhatt, and I built ClaimGuard to demonstrate how AI can transform insurance claims processing. This project combines my interests in machine learning, computer vision, and practical business applications.
+
+**GitHub**: [@abhatt13](https://github.com/abhatt13)
 
 ---
 
-## 📚 Resources
+## License
 
-- [Project Plan](/.claude/plans/logical-puzzling-cray.md)
-- [API Documentation](http://localhost:8000/docs)
+MIT License - See LICENSE file for details
+
+---
+
+## Acknowledgments
+
+- **Kaggle** for the insurance fraud dataset
+- **Roboflow** for the vehicle damage image dataset
+- **OpenAI** for the Vision API
+- **Ultralytics** for YOLOv8
+
+---
+
+Built with Python, FastAPI, and Gradio.
